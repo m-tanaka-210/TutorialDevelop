@@ -17,7 +17,7 @@ import com.techacademy.entity.User;
 import com.techacademy.service.UserService;
 
 @Controller
-@RequestMapping("user")
+@RequestMapping("/user")
 public class UserController {
     private final UserService service;
 
@@ -41,7 +41,6 @@ public class UserController {
         return "user/register";
     }
 
-    // ----- 変更ここから -----
     /** User登録処理 */
     @PostMapping("/register")
     public String postRegister(@Validated User user,BindingResult res, Model model) {
@@ -54,25 +53,34 @@ public class UserController {
         // 一覧画面にリダイレクト
         return "redirect:/user/list";
     }
-    // ----- 変更ここまで -----
 
+    // ----- 変更ここから -----
     /** User更新画面を表示 */
     @GetMapping("/update/{id}/")
     public String getUser(@PathVariable("id") Integer id, Model model) {
-        // Modelに登録
-        model.addAttribute("user", service.getUser(id));
-        // User更新画面に遷移
+        if(id !=null) {
+            // nullでない場合 一覧画面から遷移。Modelにはサービスから取得したUserをセットする
+            model.addAttribute("user", service.getUser(id));
+        }
+            // nullの場合 postUser()から遷移。ModelにはpostUser()から渡された引数のuserをセットする
         return "user/update";
     }
 
     /** User更新処理 */
     @PostMapping("/update/{id}/")
-    public String postUser(User user) {
-        // User登録
+    public String postUser(@Validated @ModelAttribute User user, BindingResult res, Model model) {
+        if(res.hasErrors()) {
+            // エラーありの場合 idにnullを設定し、getUser側でpostUserから呼ばれたことを判断
+            model.addAttribute("user", user);
+            return getUser(null, model);
+        }
+        // エラーなしの場合、User更新
         service.saveUser(user);
         // 一覧画面にリダイレクト
         return "redirect:/user/list";
     }
+    // ----- 変更ここまで -----
+
 
     /** User削除処理 */
     @PostMapping(path="list", params="deleteRun")
